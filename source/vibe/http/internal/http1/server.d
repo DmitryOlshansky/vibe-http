@@ -35,6 +35,9 @@ import std.format : format, formattedWrite;
 		connection = The stream to treat as an incoming HTTP client connection.
 		context = Information about the incoming listener and available
 			virtual hosts
+		tls_stream = tls stream
+		http_stream = http stream
+		remote_address = remote address
 */
 void handleHTTP1Connection(TLSStreamType)(TCPConnection connection, TLSStreamType tls_stream, StreamProxy http_stream, HTTPServerContext context, ref NetworkAddress remote_address)
 @safe {

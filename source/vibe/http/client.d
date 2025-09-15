@@ -186,15 +186,15 @@ unittest {
 	usually requestHTTP should be used for making requests instead of manually using a
 	HTTPClient to do so.
 */
-auto connectHTTP(string host, ushort port = 0, bool use_tls = false, const(HTTPClientSettings) settings = null)
+auto connectHTTP(string host, ushort port = 0, bool use_tls = false, const(HTTPClientSettings) settings = null) @trusted
 {
 	auto sttngs = settings ? settings : defaultSettings;
 
 	if (port == 0) port = use_tls ? 443 : 80;
-	auto ckey = ConnInfo(host, sttngs.tlsPeerName, port, use_tls, sttngs.proxyURL.host, sttngs.proxyURL.port, sttngs.networkInterface);
+	auto ckey = ConnInfo(host, sttngs.tlsPeerName, port, use_tls, sttngs.proxyURL.host, sttngs.proxyURL.port, cast()sttngs.networkInterface);
 
 	ConnectionPool!HTTPClient pool;
-	s_connections.opApply((ref c) @safe {
+	s_connections.opApply((ref c) @trusted {
 		if (c[0] == ckey)
 			pool = c[1];
 		return 0;
@@ -279,12 +279,12 @@ class HTTPClientSettings {
 	string tlsPeerName;
 
 	@property HTTPClientSettings dup()
-	const @safe {
+	const @trusted {
 		auto ret = new HTTPClientSettings;
 		ret.proxyURL = this.proxyURL;
 		ret.connectTimeout = this.connectTimeout;
 		ret.readTimeout = this.readTimeout;
-		ret.networkInterface = this.networkInterface;
+		ret.networkInterface = cast()this.networkInterface;
 		ret.dnsAddressFamily = this.dnsAddressFamily;
 		ret.tlsContextSetup = this.tlsContextSetup;
 		ret.tlsPeerName = this.tlsPeerName;
@@ -644,7 +644,7 @@ final class HTTPClient {
 		return has_body;
 	}
 
-	private bool doRequest(scope void delegate(HTTPClientRequest req) requester, ref bool close_conn, bool confirmed_proxy_auth = false /* basic only */, SysTime connected_time = Clock.currTime(UTC()))
+	private bool doRequest(scope void delegate(HTTPClientRequest req) requester, ref bool close_conn, bool confirmed_proxy_auth = false /* basic only */, SysTime connected_time = Clock.currTime(UTC())) @trusted
 	{
 		assert(!m_requesting, "Interleaved HTTP client requests detected!");
 		assert(!m_responding, "Interleaved HTTP client request/response detected!");
@@ -660,7 +660,7 @@ final class HTTPClient {
 				NetworkAddress proxyAddr = resolveHost(m_settings.proxyURL.host, m_settings.dnsAddressFamily, true,
 					m_settings.connectTimeout);
 				proxyAddr.port = m_settings.proxyURL.port;
-				m_conn = connectTCPWithTimeout(proxyAddr, m_settings.networkInterface, m_settings.connectTimeout);
+				m_conn = connectTCPWithTimeout(proxyAddr, cast()m_settings.networkInterface, m_settings.connectTimeout);
 			}
 			else {
 				version(UnixSocket)
@@ -683,12 +683,12 @@ final class HTTPClient {
 						addr = resolveHost(m_server, m_settings.dnsAddressFamily, true, m_settings.connectTimeout);
 						addr.port = m_port;
 					}
-					m_conn = connectTCPWithTimeout(addr, m_settings.networkInterface, m_settings.connectTimeout);
+					m_conn = connectTCPWithTimeout(addr, cast()m_settings.networkInterface, m_settings.connectTimeout);
 				} else
 				{
 					auto addr = resolveHost(m_server, m_settings.dnsAddressFamily, true, m_settings.connectTimeout);
 					addr.port = m_port;
-					m_conn = connectTCPWithTimeout(addr, m_settings.networkInterface, m_settings.connectTimeout);
+					m_conn = connectTCPWithTimeout(addr, cast()m_settings.networkInterface, m_settings.connectTimeout);
 				}
 			}
 

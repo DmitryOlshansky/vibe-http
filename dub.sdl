@@ -1,4 +1,4 @@
-name "vibe-http"
+name "vibe-http-light"
 description "HTTP server and client implementation and higher level HTTP functionality"
 homepage "https://vibed.org/"
 
@@ -8,9 +8,11 @@ authors "Sönke Ludwig" "Mathias 'Geod24' Lang" "Etienne Cimon" "Martin Nowak" \
 	"Francesco Galla" "Sebastian Wilzbach" "Mihails 'Dicebot' Strasuns" \
 	"over 200 contributors"
 
-dependency "vibe-inet:crypto" version="~>1.0"
-dependency "vibe-inet" version="~>1.0"
-dependency "vibe-stream:tls" version="~>1.0"
-dependency "vibe-inet:textfilter" version="~>1.0"
+dependency "photon" path="../photon"
+dependency "vibe-core-light" path="../vibe-core"
+dependency "vibe-inet-light:crypto" version="0.0.3"
+dependency "vibe-inet-light" version="0.0.3"
+dependency "vibe-stream-light:tls" version="0.0.2"
+dependency "vibe-inet-light:textfilter" version="0.0.3"
 dependency "diet-ng" version="~>1.2"
 targetType "library"

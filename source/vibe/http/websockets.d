@@ -54,6 +54,8 @@ import std.digest.sha;
 import std.uni: asLowerCase;
 import vibe.crypto.cryptorand;
 
+import photon;
+
 @safe:
 
 
@@ -517,8 +519,8 @@ final class WebSocket {
 		HTTPClientResponse m_clientResponse;
 		Task m_reader;
 		Task m_ownerTask;
-		InterruptibleTaskMutex m_readMutex, m_writeMutex;
-		InterruptibleTaskCondition m_readCondition;
+		TaskMutex m_readMutex, m_writeMutex;
+		TaskCondition m_readCondition;
 		Timer m_pingTimer;
 		uint m_lastPingIndex;
 		bool m_pongReceived;
@@ -551,9 +553,9 @@ scope:
 		m_serverResponse = server_res;
 		assert(m_conn);
 		m_rng = rng;
-		m_writeMutex = new InterruptibleTaskMutex;
-		m_readMutex = new InterruptibleTaskMutex;
-		m_readCondition = new InterruptibleTaskCondition(m_readMutex);
+		m_writeMutex = new TaskMutex;
+		m_readMutex = new TaskMutex;
+		m_readCondition = new TaskCondition(m_readMutex);
 		m_readMutex.performLocked!({
 			// NOTE: Silencing scope warning here - m_reader MUST be stopped
 			//       before the end of the lifetime of the WebSocket object,
@@ -763,7 +765,7 @@ scope:
 				logDiagnostic("Failed to send active web socket close frame: %s", e.msg);
 			}
 		}
-		if (m_pingTimer) m_pingTimer.stop();
+		if (m_pingTimer.pending) m_pingTimer.stop();
 
 
 		if (Task.getThis() == m_ownerTask) {

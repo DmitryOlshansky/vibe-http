@@ -166,7 +166,7 @@ unittest {
 */
 bool handleHTTP2Request(UStream)(ref HTTP2ConnectionStream!UStream stream,
 	TCPConnection tcp_connection, HTTP2ServerContext h2context,
-	HTTP2HeaderTableField[] headers, ref IndexingTable table, scope IAllocator alloc) @safe
+	HTTP2HeaderTableField[] headers, ref IndexingTable table, scope IAllocator alloc) @trusted
 {
 	import vibe.http.internal.utils : formatRFC822DateAlloc;
 
@@ -180,7 +180,7 @@ bool handleHTTP2Request(UStream)(ref HTTP2ConnectionStream!UStream stream,
 	scope (exit)
 		() @trusted { alloc.dispose(req); }();
 	// store the IP address
-	req.clientAddress = h2context.remoteAddress;
+	req.clientAddress = cast()h2context.remoteAddress;
 
 	if (!listen_info.hasVirtualHosts) {
 		logWarn("Didn't find a HTTP listening context for incoming connection. Dropping.");
