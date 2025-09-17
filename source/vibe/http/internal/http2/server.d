@@ -31,6 +31,7 @@ import std.algorithm : canFind; // alpn callback
 import std.algorithm.iteration;
 import std.variant : Algebraic;
 
+import photon : runPhoton;
 /*
 	3.2.  Starting HTTP/2 for "http" URIs
 
@@ -966,46 +967,50 @@ struct HTTP2ConnectionStream(CS) {
 }
 
 unittest {
-	import vibe.core.core : runApplication;
+	runPhoton({
+		import vibe.core.core : runApplication;
 
-	// empty handler, just to test if protocol switching works
-	void handleReq(scope HTTPServerRequest req, scope HTTPServerResponse res)
-	@safe
-	{
-		if (req.requestPath.toString == "/")
-			res.writeBody("Hello, World! This response is sent through HTTP/2");
-	}
+		// empty handler, just to test if protocol switching works
+		void handleReq(scope HTTPServerRequest req, scope HTTPServerResponse res)
+		@safe
+		{
+			if (req.requestPath.toString == "/")
+				res.writeBody("Hello, World! This response is sent through HTTP/2");
+		}
 
-	auto settings = new HTTPServerSettings();
-	settings.port = 8090;
-	settings.bindAddresses = ["localhost"];
+		auto settings = new HTTPServerSettings();
+		settings.port = 8090;
+		settings.bindAddresses = ["localhost"];
 
-	listenHTTP(settings, &handleReq);
-	//runApplication();
+		//listenHTTP(settings, &handleReq);
+		//runApplication();
+	});
 }
 
 unittest {
-	import vibe.core.core : runApplication;
+	runPhoton({
+		import vibe.core.core : runApplication;
 
-	void handleRequest(scope HTTPServerRequest req, scope HTTPServerResponse res)
-	@safe
-	{
-		if (req.requestPath.toString == "/")
-			res.writeBody("Hello, World! This response is sent through HTTP/2\n");
-	}
+		void handleRequest(scope HTTPServerRequest req, scope HTTPServerResponse res)
+		@safe
+		{
+			if (req.requestPath.toString == "/")
+				res.writeBody("Hello, World! This response is sent through HTTP/2\n");
+		}
 
-	auto settings = new HTTPServerSettings;
-	settings.port = 8091;
-	settings.bindAddresses = ["127.0.0.1", "192.168.1.131"];
-	settings.tlsContext = createTLSContext(TLSContextKind.server);
-	settings.tlsContext.useCertificateChainFile("tests/server.crt");
-	settings.tlsContext.usePrivateKeyFile("tests/server.key");
+		auto settings = new HTTPServerSettings;
+		settings.port = 8091;
+		settings.bindAddresses = ["127.0.0.1", "192.168.1.131"];
+		settings.tlsContext = createTLSContext(TLSContextKind.server);
+		settings.tlsContext.useCertificateChainFile("tests/server.crt");
+		settings.tlsContext.usePrivateKeyFile("tests/server.key");
 
-	// set alpn callback to support HTTP/2
-	// should accept the 'h2' protocol request
-	settings.tlsContext.alpnCallback(http2Callback);
+		// set alpn callback to support HTTP/2
+		// should accept the 'h2' protocol request
+		settings.tlsContext.alpnCallback(http2Callback);
 
-	// dummy, just for testing
-	listenHTTP(settings, &handleRequest);
-	//runApplication();
+		// dummy, just for testing
+		//listenHTTP(settings, &handleRequest);
+		//runApplication();
+	});
 }

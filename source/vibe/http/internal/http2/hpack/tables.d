@@ -17,6 +17,8 @@ import std.algorithm.iteration;
 import std.math : log10;
 import taggedalgebraic;
 
+import photon : runPhoton;
+
 alias HTTP2SettingValue = uint;
 
 // 4096 octets
@@ -429,40 +431,42 @@ struct IndexingTable {
 }
 
 unittest {
-	// indexing table
-	IndexingTable table = IndexingTable(DEFAULT_DYNAMIC_TABLE_SIZE);
-	assert(table[2].name == ":method" && table[2].value.methodValue == HTTPMethod.GET);
+	runPhoton({
+		// indexing table
+		IndexingTable table = IndexingTable(DEFAULT_DYNAMIC_TABLE_SIZE);
+		assert(table[2].name == ":method" && table[2].value.methodValue == HTTPMethod.GET);
 
-	// assignment
-	auto h = HTTP2HeaderTableField("test", "testval");
-	table.insert(h);
-	assert(table.size == STATIC_TABLE_SIZE + 2);
-	assert(table[STATIC_TABLE_SIZE + 1].name == "test");
+		// assignment
+		auto h = HTTP2HeaderTableField("test", "testval");
+		table.insert(h);
+		assert(table.size == STATIC_TABLE_SIZE + 2);
+		assert(table[STATIC_TABLE_SIZE + 1].name == "test");
 
-	auto h2 = HTTP2HeaderTableField("test2", "testval2");
-	table.insert(h2);
-	assert(table.size == STATIC_TABLE_SIZE + 3);
-	assert(table[STATIC_TABLE_SIZE + 1].name == "test2");
+		auto h2 = HTTP2HeaderTableField("test2", "testval2");
+		table.insert(h2);
+		assert(table.size == STATIC_TABLE_SIZE + 3);
+		assert(table[STATIC_TABLE_SIZE + 1].name == "test2");
 
-	// dollar
-	auto h3 = HTTP2HeaderTableField("test3", "testval3");
-	table.insert(h3);
-	assert(table.size == STATIC_TABLE_SIZE + 4);
-	assert(table[$ - 1].name == "test");
-	assert(table[$ - 2].name == "test2");
-	assert(table[STATIC_TABLE_SIZE + 1].name == "test3");
+		// dollar
+		auto h3 = HTTP2HeaderTableField("test3", "testval3");
+		table.insert(h3);
+		assert(table.size == STATIC_TABLE_SIZE + 4);
+		assert(table[$ - 1].name == "test");
+		assert(table[$ - 2].name == "test2");
+		assert(table[STATIC_TABLE_SIZE + 1].name == "test3");
 
-	// test removal on full table
+		// test removal on full table
 
-	HTTP2SettingValue hts = computeEntrySize(h); // only one header
-	IndexingTable t2 = IndexingTable(hts);
-	t2.insert(h);
-	t2.insert(h);
-	assert(t2.size == STATIC_TABLE_SIZE + 2);
-	assert(t2[STATIC_TABLE_SIZE + 1].name == "test");
-	assert(t2[$ - 1].name == "test");
+		HTTP2SettingValue hts = computeEntrySize(h); // only one header
+		IndexingTable t2 = IndexingTable(hts);
+		t2.insert(h);
+		t2.insert(h);
+		assert(t2.size == STATIC_TABLE_SIZE + 2);
+		assert(t2[STATIC_TABLE_SIZE + 1].name == "test");
+		assert(t2[$ - 1].name == "test");
 
-	auto h4 = HTTP2HeaderTableField("", "");
-	hts = computeEntrySize(h4); // entry size of an empty field is 32 octets
-	assert(hts == 32);
+		auto h4 = HTTP2HeaderTableField("", "");
+		hts = computeEntrySize(h4); // entry size of an empty field is 32 octets
+		assert(hts == 32);
+	});
 }

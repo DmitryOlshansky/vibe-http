@@ -40,8 +40,9 @@ import std.format : format, formattedWrite;
 		remote_address = remote address
 */
 void handleHTTP1Connection(TLSStreamType)(TCPConnection connection, TLSStreamType tls_stream, StreamProxy http_stream, HTTPServerContext context, ref NetworkAddress remote_address)
-@safe {
-
+@trusted {
+	scope request_allocator = createRequestAllocator();
+	scope (exit) freeRequestAllocator(request_allocator);
 	while (!connection.empty) {
 		HTTPServerSettings settings;
 		bool keep_alive;
@@ -50,13 +51,10 @@ void handleHTTP1Connection(TLSStreamType)(TCPConnection connection, TLSStreamTyp
 			// handle oderly TLS shutdowns
 			if (tls_stream && tls_stream.empty) break;
 		}
+		
 
-		() @trusted {
-			scope request_allocator = createRequestAllocator();
-			scope (exit) freeRequestAllocator(request_allocator);
-
-			handleRequest!TLSStreamType(http_stream, connection, context, settings, keep_alive, request_allocator, remote_address);
-		} ();
+		handleRequest!TLSStreamType(http_stream, connection, context, settings, keep_alive, request_allocator, remote_address);
+		request_allocator.deallocateAll();
 		if (!keep_alive) { logTrace("No keep-alive - disconnecting client."); break; }
 
 		logTrace("Waiting for next request...");
@@ -72,7 +70,7 @@ void handleHTTP1Connection(TLSStreamType)(TCPConnection connection, TLSStreamTyp
 
 private bool handleRequest(TLSStreamType, Allocator)(StreamProxy http_stream, TCPConnection tcp_connection, HTTPServerContext listen_info, ref HTTPServerSettings settings, ref bool keep_alive, scope Allocator request_allocator, ref NetworkAddress remote_address)
 @safe {
-	import vibe.container.internal.utilallocator : make, dispose;
+	import vibe.http.internal.region_allocator : make, dispose;
 	import vibe.http.internal.utils : formatRFC822DateAlloc;
 	import std.algorithm.searching : canFind, startsWith;
 	import std.conv : parse, to;

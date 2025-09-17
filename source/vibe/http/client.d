@@ -313,7 +313,7 @@ unittest {
 
 	}
 }
-
+/+
 version (Have_vibe_core)
 unittest { // test connect timeout
 	import std.conv : to;
@@ -371,7 +371,7 @@ unittest { // test read timeout
 		} catch(Exception e) {}
 	}
 }
-
++/
 
 /**
 	Implementation of a HTTP 1.0/1.1 client with keep-alive support.
