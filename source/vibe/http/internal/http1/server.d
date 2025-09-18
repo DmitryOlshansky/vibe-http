@@ -258,6 +258,12 @@ private bool handleRequest(TLSStreamType, Allocator)(StreamProxy http_stream, TC
 				if (req.session) break;
 			}
 		}
+		static Duration lastKeepAlive;
+		static string keepAliveHeader;
+		if (lastKeepAlive != settings.keepAliveTimeout) {
+			keepAliveHeader = format("timeout=%d", settings.keepAliveTimeout.total!"seconds"());
+			lastKeepAlive = settings.keepAliveTimeout;
+		}
 
 		// write default headers
 		if (req.method == HTTPMethod.HEAD) exchange.m_isHeadResponse = true;
@@ -265,8 +271,7 @@ private bool handleRequest(TLSStreamType, Allocator)(StreamProxy http_stream, TC
 			res.headers["Server"] = settings.serverString;
 		res.headers["Date"] = formatRFC822DateAlloc(reqtime);
 		if (req.persistent)
-			res.headers["Keep-Alive"] = formatAlloc(
-				request_allocator, "timeout=%d", settings.keepAliveTimeout.total!"seconds"());
+			res.headers["Keep-Alive"] = keepAliveHeader;
 
 		// finished parsing the request
 		parsed = true;
@@ -439,6 +444,7 @@ class HTTP1ServerExchange : HTTPServerExchange {
 
 		auto bytes = stream.size - stream.tell();
 		stream.pipe(m_conn);
+		m_conn.flush();
 		m_countingWriter.increment(bytes);
 	}
 
@@ -452,6 +458,7 @@ class HTTP1ServerExchange : HTTPServerExchange {
 			stream.pipe(m_conn, num_bytes);
 			m_countingWriter.increment(num_bytes);
 		} else stream.pipe(m_countingWriter);
+		m_conn.flush();
 	}
 
 	override void writeVoidBody(HTTPServerResponse res)

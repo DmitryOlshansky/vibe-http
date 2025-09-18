@@ -199,9 +199,10 @@ void handleHTTPConnection(TCPConnection connection, HTTPServerContext context)
 }
 /// ditto
 void handleHTTPConnection(TCPConnection connection, HTTPServerContext context, ref NetworkAddress remote_address)
-@safe {
+@trusted {
 	import vibe.http.internal.http1.server : handleHTTP1Connection;
 	import vibe.http.internal.http2.server : handleHTTP2Connection;
+	import vibe.http.internal.accumulating_stream;
 	import vibe.http.internal.http2.settings : HTTP2ServerContext, HTTP2Settings;
 
 	static if (HaveNoTLS) {
@@ -211,7 +212,8 @@ void handleHTTPConnection(TCPConnection connection, HTTPServerContext context, r
 	}
 
 	InterfaceProxy!Stream http_stream;
-	http_stream = connection;
+	ubyte[8096] buffer = void;
+	http_stream = accumulatingStream(connection, buffer[]);
 
 	scope (exit) connection.close();
 
