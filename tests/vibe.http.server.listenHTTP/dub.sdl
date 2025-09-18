@@ -1,4 +1,4 @@
 name "tests"
 description "listenHTTP tests"
-dependency "vibe-http" path="../../"
+dependency "vibe-http-light" path="../../"
 versions "VibeDefaultMain"

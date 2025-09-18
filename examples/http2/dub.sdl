@@ -1,6 +1,6 @@
 name "http2-example"
 
-dependency "vibe-http" path="../../../vibe-http"
+dependency "vibe-http-light" path="../../../vibe-http"
 
 /*versions "VibeForceALPN"*/
 targetType "executable"

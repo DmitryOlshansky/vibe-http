@@ -1,2 +1,2 @@
 name "test"
-dependency "vibe-http" path="../../"
+dependency "vibe-http-light" path="../../"
